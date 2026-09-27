@@ -5,6 +5,7 @@ from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 from langgraph.graph.message import add_messages
+from langgraph.checkpoint.memory import InMemorySaver
 load_dotenv()
 
 
@@ -15,30 +16,27 @@ class ChatState(TypedDict):
 
 
 def chat_node(state: ChatState):
-
     messages = state['messages']
-
     response = model.invoke(messages)
-
     return {'messages': [response]}
 
 
 graph = StateGraph(ChatState)
 
 graph.add_node('chat_node', chat_node)
-
 graph.add_edge(START, 'chat_node')
 graph.add_edge('chat_node', END)
 
-workflow = graph.compile()
+checkpointer = InMemorySaver()
 
-print(workflow)
+chatbot = graph.compile(checkpointer=checkpointer)
 
-initial_state= {'messages':[HumanMessage(content='what is the capital of india')]}
 
-response = workflow.invoke(initial_state)
+# initial_state= {'messages':[HumanMessage(content='what is the capital of india')]}
 
-print(response)
+# response = workflow.invoke(initial_state)
+
+# print(response)
 
 
 
